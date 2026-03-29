@@ -41,7 +41,10 @@ class ImpectResponse(requests.Response):
 ######
 
 class ImpectSession(requests.Session):
+    DEFAULT_TIMEOUT = 120  # seconds
+
     def request(self, *args, **kwargs) -> ImpectResponse:
+        kwargs.setdefault("timeout", self.DEFAULT_TIMEOUT)
         response = super().request(*args, **kwargs)
         response.__class__ = ImpectResponse
         return response
