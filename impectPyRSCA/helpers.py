@@ -118,13 +118,14 @@ class RateLimitedAPI:
             response = self.make_api_request(url=url, method=method, data=data)
         else:
             # wait for refill
-            time.sleep(
-                max(0, math.ceil(
-                    self.bucket.refill_after * 100 - (
-                            time.time() - self.bucket.last_refill_time
-                    ) * 100
-                ) / 100)
-            )
+            wait_time = max(0, math.ceil(
+                self.bucket.refill_after * 100 - (
+                        time.time() - self.bucket.last_refill_time
+                ) * 100
+            ) / 100)
+            logger.info(f"Rate limit: waiting {wait_time:.1f}s for token refill (bucket refill_after={self.bucket.refill_after}s)")
+            print(f"Rate limit: waiting {wait_time:.1f}s for token refill")
+            time.sleep(wait_time)
 
             # call function again
             response = self.make_api_request_limited(url=url, method=method, data=data)
@@ -144,6 +145,7 @@ class RateLimitedAPI:
         """
         # try API call
         for i in range(max_retries):
+            print(f"  [API] {method} {url} (attempt {i+1}/{max_retries})")
             response = self.session.request(method=method, url=url, data=data)
 
             # check status code and return if 200
