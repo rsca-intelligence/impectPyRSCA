@@ -77,6 +77,7 @@ class RateLimitedAPI:
         """
         self.session = session or ImpectSession()  # use the provided session or create a new session
         self.bucket = None  # TokenBucket object to manage rate limit tokens
+        self._cache = {}  # URL -> ImpectResponse cache for deduplicating repeated GET requests
 
     # make a rate-limited API request
     def make_api_request_limited(
@@ -88,6 +89,12 @@ class RateLimitedAPI:
         Returns:
             ImpectResponse: The response returned by the API.
         """
+
+        # return cached response for repeated GET requests
+        if method.upper() == "GET" and url in self._cache:
+            logger.info(f"  [CACHE HIT] {method} {url}")
+            print(f"  [CACHE HIT] {method} {url}")
+            return self._cache[url]
 
         # check if bucket is not initialized
         if not self.bucket:
@@ -110,6 +117,10 @@ class RateLimitedAPI:
                 remaining=int(response.headers["RateLimit-Remaining"])
             )
 
+            # cache successful GET responses
+            if method.upper() == "GET":
+                self._cache[url] = response
+
             return response
 
         # check if a token is available
@@ -130,8 +141,16 @@ class RateLimitedAPI:
             # call function again
             response = self.make_api_request_limited(url=url, method=method, data=data)
 
+        # cache successful GET responses
+        if method.upper() == "GET" and url not in self._cache:
+            self._cache[url] = response
+
         # return response
         return response
+
+    def clear_cache(self):
+        """Clears the response cache."""
+        self._cache.clear()
 
     def make_api_request(
             self, url: str, method: str, data: Optional[Dict[str, Any]] = None,
