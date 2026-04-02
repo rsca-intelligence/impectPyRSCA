@@ -330,8 +330,9 @@ def getPlayerMatchsumsFromHost(matches: list, connection: RateLimitedAPI, host: 
         "playDuration"
     ]
 
-    # add kpiNames to order
-    order += kpis['name'].to_list()
+    # add kpiNames to order, excluding any that already exist as fixed columns
+    fixed_cols = set(order)
+    order += [k for k in kpis['name'].to_list() if k not in fixed_cols]
 
     # check if coaches are blacklisted
     if coaches_blacklisted:
