@@ -125,21 +125,30 @@ def getSetPiecesFromHost(matches: list, connection: RateLimitedAPI, host: str) -
         return connection.make_api_request_limited(
             url=url,
             method="GET"
-        ).process_response(endpoint="Set-Pieces")
+        ).process_response(endpoint="Set-Pieces", raise_exception=False)
 
     # create list to store dfs
     set_pieces_list = []
     for match in matches:
-        set_pieces = safe_execute(
+        sp = safe_execute(
             fetch_set_pieces,
             connection,
             url=f"{host}/v5/customerapi/matches/{match}/set-pieces",
             identifier=f"{match}",
             forbidden_list=forbidden_matches
-        ).rename(
-            columns={"id": "setPieceId"}
-        ).explode("setPieceSubPhase", ignore_index=True)
-        set_pieces_list.append(set_pieces)
+        )
+        if not sp.empty:
+            sp = sp.rename(
+                columns={"id": "setPieceId"}
+            ).explode("setPieceSubPhase", ignore_index=True)
+            set_pieces_list.append(sp)
+        else:
+            warnings.warn(f"No set piece data available for match {match}")
+
+    if not set_pieces_list:
+        warnings.warn("No set piece data available for any of the supplied matches.")
+        return pd.DataFrame()
+
     set_pieces = pd.concat(set_pieces_list).reset_index()
 
     # unpack setPieceSubPhase column
