@@ -106,8 +106,11 @@ def getEventsFromHost(
         events_list.append(events)
     events = pd.concat(events_list)
 
-    # account for matches without dribbles, duels, pressing, fouls, passes or opponents tagged
+    # account for matches where certain columns may be absent from the API response
     attributes = [
+        "squadId",
+        "currentAttackingSquadId",
+        "playerId",
         "dribbleDistance",
         "dribbleType",
         "dribbleResult",
@@ -258,11 +261,9 @@ def getEventsFromHost(
             include_set_pieces = False
 
     # fix potential typing issues
-    events.pressingPlayerId = events.pressingPlayerId.astype("Int64")
-    events.fouledPlayerId = events.fouledPlayerId.astype("Int64")
-    events.passReceiverPlayerId = events.passReceiverPlayerId.astype("Int64")
-    events.duelPlayerId = events.duelPlayerId.astype("Int64")
-    events.fouledPlayerId = events.fouledPlayerId.astype("Int64")
+    for col in ["pressingPlayerId", "fouledPlayerId", "passReceiverPlayerId", "duelPlayerId"]:
+        if col in events.columns:
+            events[col] = events[col].astype("Int64")
     if include_set_pieces:
         set_pieces.setPieceSubPhaseMainEventPlayerId = set_pieces.setPieceSubPhaseMainEventPlayerId.astype("Int64")
         set_pieces.setPieceSubPhaseFirstTouchPlayerId = set_pieces.setPieceSubPhaseFirstTouchPlayerId.astype("Int64")
@@ -271,14 +272,21 @@ def getEventsFromHost(
     # start merging dfs
 
     # merge events with master data
-    events["squadName"] = events.squadId.map(squad_map)
-    events["currentAttackingSquadName"] = events.currentAttackingSquadId.map(squad_map)
-    events["playerName"] = events.playerId.map(player_map)
-    events["pressingPlayerName"] = events.pressingPlayerId.map(player_map)
-    events["fouledPlayerName"] = events.fouledPlayerId.map(player_map)
-    events["duelPlayerName"] = events.duelPlayerId.map(player_map)
-    events["passReceiverPlayerName"] = events.passReceiverPlayerId.map(player_map)
-    events["dribbleOpponentPlayerName"] = events.dribblePlayerId.map(player_map)
+    name_mappings = [
+        ("squadId", "squadName", squad_map),
+        ("currentAttackingSquadId", "currentAttackingSquadName", squad_map),
+        ("playerId", "playerName", player_map),
+        ("pressingPlayerId", "pressingPlayerName", player_map),
+        ("fouledPlayerId", "fouledPlayerName", player_map),
+        ("duelPlayerId", "duelPlayerName", player_map),
+        ("passReceiverPlayerId", "passReceiverPlayerName", player_map),
+        ("dribblePlayerId", "dribbleOpponentPlayerName", player_map),
+    ]
+    for src_col, dst_col, mapping in name_mappings:
+        if src_col in events.columns:
+            events[dst_col] = events[src_col].map(mapping)
+        else:
+            events[dst_col] = np.nan
     events = events.merge(
         matchplan,
         left_on="matchId",
