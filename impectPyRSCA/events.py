@@ -106,7 +106,7 @@ def getEventsFromHost(
         events_list.append(events)
     events = pd.concat(events_list)
 
-    # account for matches without dribbles, duels or opponents tagged
+    # account for matches without dribbles, duels, pressing, fouls, passes or opponents tagged
     attributes = [
         "dribbleDistance",
         "dribbleType",
@@ -114,6 +114,9 @@ def getEventsFromHost(
         "dribblePlayerId",
         "duelDuelType",
         "duelPlayerId",
+        "pressingPlayerId",
+        "fouledPlayerId",
+        "passReceiverPlayerId",
         "opponentCoordinatesX",
         "opponentCoordinatesY",
         "opponentAdjCoordinatesX",
