@@ -20,6 +20,7 @@ from .generate_xml import generateXML
 from .set_pieces import getSetPieces
 from .squad_ratings import getSquadRatings
 from .squad_coefficients import getSquadCoefficients
+from .iteration_squads import getIterationSquads
 from .formations import getFormations
 from .substitutions import getSubstitutions
 from .starting_positions import getStartingPositions

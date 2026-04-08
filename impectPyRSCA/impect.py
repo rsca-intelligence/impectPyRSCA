@@ -18,6 +18,7 @@ from .generate_xml import generateXML
 from .set_pieces import getSetPiecesFromHost
 from .squad_ratings import getSquadRatingsFromHost
 from .squad_coefficients import getSquadCoefficientsFromHost
+from .iteration_squads import getIterationSquadsFromHost
 from .formations import getFormationsFromHost
 from .substitutions import getSubstitutionsFromHost
 from .starting_positions import getStartingPositionsFromHost
@@ -118,6 +119,11 @@ class Impect:
 
     def getSquadCoefficients(self, iteration: int) -> pd.DataFrame:
         return getSquadCoefficientsFromHost(
+            iteration, self.connection, self.__config.HOST
+        )
+
+    def getIterationSquads(self, iteration: int) -> pd.DataFrame:
+        return getIterationSquadsFromHost(
             iteration, self.connection, self.__config.HOST
         )
 
