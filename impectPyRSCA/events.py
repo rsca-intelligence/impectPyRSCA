@@ -106,6 +106,22 @@ def getEventsFromHost(
         events_list.append(events)
     events = pd.concat(events_list)
 
+    # Handle nested gameTime object from newer API format.
+    # The API now returns gameTime as {"gameTime": "MM:SS.FFFF", "gameTimeInSec": float}
+    # which pd.json_normalize flattens to gameTimeGameTime and gameTimeGameTimeInSec.
+    if "gameTimeGameTime" in events.columns:
+        def _parse_game_minute(val):
+            """Parse 'MM:SS.FFFF' to integer minute."""
+            try:
+                return int(str(val).split(":")[0])
+            except (ValueError, IndexError):
+                return np.nan
+        events["gameTime"] = events["gameTimeGameTime"].apply(_parse_game_minute).astype("Int64")
+        events.drop(columns=["gameTimeGameTime"], inplace=True)
+    if "gameTimeGameTimeInSec" in events.columns:
+        events["gameTimeInSec"] = pd.to_numeric(events["gameTimeGameTimeInSec"], errors="coerce")
+        events.drop(columns=["gameTimeGameTimeInSec"], inplace=True)
+
     # account for matches where certain columns may be absent from the API response
     attributes = [
         "squadId",
