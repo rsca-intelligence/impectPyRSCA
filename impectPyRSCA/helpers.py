@@ -331,15 +331,12 @@ def unnest_mappings_df(df: pd.DataFrame, mapping_col: str) -> pd.DataFrame:
         for mapping in entry[mapping_col]:
             # get mapping data
             for provider, mapping_ids in mapping.items():
-                # fix provider name
+                # fix provider name (known snake_case → camelCase);
+                # unknown providers (e.g. "opta") are passed through as-is
                 if provider == "heim_spiel":
                     provider = "heimSpiel"
                 elif provider == "skill_corner":
                     provider = "skillCorner"
-                elif provider == "wyscout":
-                    pass
-                else:
-                    raise Exception(f"Unknown provider: {provider}")
 
                 # check if mapping is a dict with at least one entry
                 if isinstance(mapping_ids, list):
