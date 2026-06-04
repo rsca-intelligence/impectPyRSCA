@@ -12,7 +12,7 @@ setup(
     install_requires=["requests>=2.24.0",
                       "pandas>=2.2.0",
                       "numpy>=1.24.2"],
-    version="2.5.7",
+    version="2.5.8",
     license="MIT",
     description="RSCA fork of impectPy — a Python package to facilitate interaction with the Impect customer API",
     long_description=README,

@@ -411,3 +411,35 @@ def safe_execute(func, *args, fallback=None, identifier: str, forbidden_list: li
         if isinstance(e, ForbiddenError):
             forbidden_list.append(identifier)
         return fallback
+
+
+######
+#
+# This function splits match-info rows into unavailable matches and available
+# iterations, tolerating an absent lastCalculationDate column
+#
+######
+
+
+def filter_unavailable_matches(match_data: pd.DataFrame) -> tuple[list, list]:
+    """Split match-info rows into (unavailable_match_ids, available_iteration_ids).
+
+    The per-match Match Info endpoint occasionally omits the
+    ``lastCalculationDate`` field entirely. Attribute access
+    (``match_data.lastCalculationDate``) then raised AttributeError and aborted
+    the whole getEvents call (observed Apr 2026; poisoned 112k matches via the
+    downstream events blocklist). When the column is absent we treat every
+    supplied match as available — callers only request matches already known to
+    be available, and genuinely empty event responses are handled downstream.
+    """
+    if "lastCalculationDate" not in match_data.columns:
+        return [], list(match_data["iterationId"].unique())
+    unavailable = (
+        match_data[match_data["lastCalculationDate"].isnull()]["id"]
+        .drop_duplicates()
+        .to_list()
+    )
+    iterations = list(
+        match_data[match_data["lastCalculationDate"].notnull()]["iterationId"].unique()
+    )
+    return unavailable, iterations

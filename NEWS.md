@@ -1,3 +1,11 @@
+# impectPy 2.5.8
+
+## Bug Fixes
+* Tolerate a missing `lastCalculationDate` column in the per-match Match Info
+  response. Previously the attribute access `match_data.lastCalculationDate`
+  raised `AttributeError` and aborted `getEvents` (and the other match-level
+  endpoints) when the API omitted the field, silently dropping the match.
+
 # impectPy 2.5.7
 
 ## Minor Changes
