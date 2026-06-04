@@ -2,7 +2,7 @@
 import pandas as pd
 import requests
 import warnings
-from impectPyRSCA.helpers import RateLimitedAPI, ImpectSession, safe_execute
+from impectPyRSCA.helpers import RateLimitedAPI, ImpectSession, safe_execute, filter_unavailable_matches
 from .matches import getMatchesFromHost
 from .iterations import getIterationsFromHost
 
@@ -54,7 +54,7 @@ def getStartingPositionsFromHost(matches: list, connection: RateLimitedAPI, host
     match_data = pd.concat(match_data_list)
 
     # filter for matches that are unavailable
-    unavailable_matches = match_data[match_data.lastCalculationDate.isnull()].id.drop_duplicates().to_list()
+    unavailable_matches, available_iterations = filter_unavailable_matches(match_data)
 
     # drop matches that are unavailable from list of matches
     matches = [match for match in matches if match not in unavailable_matches]
@@ -76,7 +76,7 @@ def getStartingPositionsFromHost(matches: list, connection: RateLimitedAPI, host
         warnings.warn(f"The following matches are not available yet and were ignored: {unavailable_matches}")
 
     # extract iterationIds
-    iterations = list(match_data[match_data.lastCalculationDate.notnull()].iterationId.unique())
+    iterations = available_iterations
 
     # get players
     players_list = []
